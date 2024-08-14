@@ -1,0 +1,8 @@
+[package]
+name = "auto-tas"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = "1.39.2"
+winit = "0.30.5"
