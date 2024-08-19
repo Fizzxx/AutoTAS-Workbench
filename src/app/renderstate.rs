@@ -1,33 +1,29 @@
-use winit::window::Window;
-use winit::event::WindowEvent;
+use std::sync::Arc;
 
-pub struct WindowState<'a> {
-    surface: wgpu::Surface<'a>,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    config: wgpu::SurfaceConfiguration,
-    size: winit::dpi::PhysicalSize<u32>,
-    // The window must be declared after the surface so
-    // it gets dropped after it as the surface contains
-    // unsafe references to the window's resources.
-    window: &'a Window,
+use egui_winit::{ winit, winit::window::Window };
+
+
+pub struct RenderState {
+    pub window: Arc<Window>,
+    pub surface: wgpu::Surface<'static>,
+    pub device: wgpu::Device,
+    pub queue: wgpu::Queue,
+    pub surface_configs: wgpu::SurfaceConfiguration,
+    pub size: winit::dpi::PhysicalSize<u32>,
 }
 
-impl<'a> WindowState<'a> {
+impl RenderState {
     // Creating some of the wgpu types requires async code
-    pub async fn new(window: &'a Window) -> WindowState<'a> {
+    pub async fn new(window: Arc<Window> ) -> RenderState {
         let size = window.inner_size();
         // The instance is a handle to our GPU
         // Backends::all => Vulkan + Metal + DX12 + Browser WebGPU
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-            #[cfg(not(target_arch="wasm32"))]
-            backends: wgpu::Backends::PRIMARY,
-            #[cfg(target_arch="wasm32")]
-            backends: wgpu::Backends::GL,
+            backends: wgpu::Backends::DX12, // use PRIMARY to include the rest
             ..Default::default()
         });
         
-        let surface = instance.create_surface(window).unwrap();
+        let surface = instance.create_surface(window.clone()).expect("Failed to create surface from window");
 
         let adapter = instance.request_adapter(
             &wgpu::RequestAdapterOptions {
@@ -35,23 +31,17 @@ impl<'a> WindowState<'a> {
                 compatible_surface: Some(&surface),
                 force_fallback_adapter: false,
             },
-        ).await.unwrap();
+        ).await.expect("Failed to acquire valid adapter");
         
         let (device, queue) = adapter.request_device(
             &wgpu::DeviceDescriptor {
                 required_features: wgpu::Features::empty(),
-                // WebGL doesn't support all of wgpu's features, so if
-                // we're building for the web, we'll have to disable some.
-                required_limits: if cfg!(target_arch = "wasm32") {
-                    wgpu::Limits::downlevel_webgl2_defaults()
-                } else {
-                    wgpu::Limits::default()
-                },
+                required_limits: wgpu::Limits::default(),
                 label: None,
                 memory_hints: wgpu::MemoryHints::default()
             },
             None, // Trace path
-        ).await.unwrap();
+        ).await.expect("Failed to create device");
 
         let surface_caps = surface.get_capabilities(&adapter);
         // Shader code in this tutorial assumes an sRGB surface texture. Using a different
@@ -61,44 +51,25 @@ impl<'a> WindowState<'a> {
             .find(|f| f.is_srgb())
             .copied()
             .unwrap_or(surface_caps.formats[0]);
-        let config = wgpu::SurfaceConfiguration {
+        let surface_configs = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
             width: size.width,
             height: size.height,
-            present_mode: surface_caps.present_modes[0],  //wgpu::PresentMode::Fifo,  
+            present_mode: wgpu::PresentMode::Fifo,  //surface_caps.present_modes[0]  
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
-            desired_maximum_frame_latency: 2,
+            desired_maximum_frame_latency: 0,
         };
+        surface.configure(&device, &surface_configs);
 
         Self {
             window,
             surface,
             device,
             queue,
-            config,
+            surface_configs,
             size,
         }
-    }
-
-    pub fn window(&self) -> &Window {
-        &self.window
-    }
-
-    fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
-        todo!()
-    }
-
-    fn input(&mut self, event: &WindowEvent) -> bool {
-        todo!()
-    }
-
-    fn update(&mut self) {
-        todo!()
-    }
-
-    fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-        todo!()
     }
 }
