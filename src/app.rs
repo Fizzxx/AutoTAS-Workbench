@@ -7,23 +7,30 @@ use egui_winit::winit:: {
     dpi::PhysicalSize,
     event::WindowEvent,
     event_loop::ActiveEventLoop,
+    keyboard::{ KeyCode, PhysicalKey::Code },
     window::{ Window, WindowId },
 };
 use egui_wgpu::{ ScreenDescriptor, wgpu };
 
-mod renderstate;
+pub mod eguirenderer;
+use eguirenderer::EguiRenderer;
+
+pub mod renderstate;
+use monitors::toppanel::TopPanel;
 use renderstate::RenderState;
 
-mod eguirenderer;
-use eguirenderer::EguiRenderer;
+pub mod monitors;
+use monitors::Monitors;
 
 
 pub struct App {
     title: String,
     window_size: PhysicalSize<u32>,
     scale_factor: f32,
-    render_state: Option<RenderState>,
     egui_renderer: Option<EguiRenderer>,
+    render_state: Option<RenderState>,
+    monitors: Monitors,
+    toppanel: TopPanel
 }
 
 impl Default for App {
@@ -33,9 +40,9 @@ impl Default for App {
             window_size: PhysicalSize::new(1920, 1080),
             scale_factor: 1.0,
             render_state: None,
-            //egui_context: egui::Context::default(),
-            // egui_winit: None,
             egui_renderer: None,
+            monitors: Monitors::default(),
+            toppanel: TopPanel::default(),
         }
     }
 }
@@ -91,30 +98,8 @@ impl App {
             &surface_view,
             screen_descriptor,
             |ctx| {
-                egui::Window::new("winit + egui + wgpu says hello!")
-                    .default_size(egui::vec2(800.0,800.0))
-                    .resizable(true)
-                    .scroll(egui::Vec2b{x:true, y:true})
-                    .default_open(false)
-                    .show(ctx, |ui| {
-                        ui.label("Label!");
-                        if ui.button("button!").clicked() {
-                            println!("boom!")
-                        }
-                        ui.separator();
-                        ui.horizontal(|ui| {
-                            ui.label(format!(
-                                "Pixels per point: {}",
-                                ctx.pixels_per_point()
-                            ));
-                            if ui.button("-").clicked() {
-                                self.scale_factor = (self.scale_factor - 0.1).max(0.3);
-                            }
-                            if ui.button("+").clicked() {
-                                self.scale_factor = (self.scale_factor + 0.1).min(3.0);
-                            }
-                        });
-                    });
+                self.toppanel.show(ctx);
+                self.monitors.draw_monitors(ctx);
             },
         );
         rs.queue.submit(Some(encoder.finish()));
@@ -133,6 +118,7 @@ impl App {
 }
 
 impl ApplicationHandler for App {
+    // resumed is called at the beginning of the application
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         let window_attributes = Window::default_attributes()
             .with_inner_size(self.window_size)
@@ -166,6 +152,18 @@ impl ApplicationHandler for App {
             }
             WindowEvent::Resized(physical_size) => {
                 self.resize(physical_size);
+            }
+            WindowEvent::KeyboardInput{event, ..} => {
+                if event.state.is_pressed() {
+                    match event.physical_key {
+                        Code(KeyCode::KeyN) => {
+                            self.monitors.enable_monitor("Test Monitor".to_string());
+                        }
+                        _ => {}
+                    }
+                }
+                
+                window.request_redraw()
             }
             _ => (),
         }

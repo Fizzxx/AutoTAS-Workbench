@@ -26,6 +26,21 @@ impl EguiRenderer {
         window: &Window,
     ) -> Self {
         let egui_context = Context::default();
+        let mut fonts = egui::FontDefinitions::default();
+
+        fonts.font_data.insert("my_font".to_owned(),
+            egui::epaint::text::FontData::from_static(include_bytes!(
+                "../../fonts/FiraCodeNerdFont-Regular.ttf")));
+
+        fonts.families.get_mut(&egui::epaint::FontFamily::Proportional)
+                      .unwrap()
+                      .insert(0, "my_font".to_owned());
+
+        fonts.families.get_mut(&egui::epaint::FontFamily::Monospace)
+                      .unwrap()
+                      .push("my_font".to_owned());
+
+        egui_context.set_fonts(fonts);
 
         let egui_state = egui_winit::State::new(
             egui_context,
@@ -53,10 +68,6 @@ impl EguiRenderer {
         let _ = self.state.on_window_event(window, event);
     }
 
-    // pub fn ppp(&mut self, v: f32) {
-    //     self.state.egui_ctx().set_pixels_per_point(v);
-    // }
-
     pub fn draw(
         &mut self,
         device: &Device,
@@ -72,10 +83,12 @@ impl EguiRenderer {
             .set_pixels_per_point(screen_descriptor.pixels_per_point);
 
         let raw_input = self.state.take_egui_input(window);
-        let full_output = self.state.egui_ctx().run(raw_input, |_ui| {
-            run_ui(self.state.egui_ctx());
-            //run_ui(ui);  // what's the difference b/w these 2?
-        });
+        let full_output = self.state.egui_ctx().run(
+            raw_input, 
+            |_ctx| {
+                run_ui(self.state.egui_ctx());
+                //run_ui(ctx);  // what's the difference b/w these 2?
+            });
 
         self.state.handle_platform_output(window, full_output.platform_output);
 
