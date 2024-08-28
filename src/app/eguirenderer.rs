@@ -26,21 +26,8 @@ impl EguiRenderer {
         window: &Window,
     ) -> Self {
         let egui_context = Context::default();
-        let mut fonts = egui::FontDefinitions::default();
 
-        fonts.font_data.insert("my_font".to_owned(),
-            egui::epaint::text::FontData::from_static(include_bytes!(
-                "../../fonts/FiraCodeNerdFont-Regular.ttf")));
-
-        fonts.families.get_mut(&egui::epaint::FontFamily::Proportional)
-                      .unwrap()
-                      .insert(0, "my_font".to_owned());
-
-        fonts.families.get_mut(&egui::epaint::FontFamily::Monospace)
-                      .unwrap()
-                      .push("my_font".to_owned());
-
-        egui_context.set_fonts(fonts);
+        Self::setup_fonts(&egui_context);
 
         let egui_state = egui_winit::State::new(
             egui_context,
@@ -127,5 +114,23 @@ impl EguiRenderer {
         for x in &full_output.textures_delta.free {
             self.renderer.free_texture(x)
         }
+    }
+
+    fn setup_fonts(ctx: &egui::Context) {
+        let mut fonts = egui::FontDefinitions::default();
+
+        fonts.font_data.insert("my_font".to_owned(),
+            egui::epaint::text::FontData::from_static(include_bytes!(
+                "../../fonts/FiraCodeNerdFont-Regular.ttf")));
+
+        fonts.families.get_mut(&egui::epaint::FontFamily::Proportional)
+                      .unwrap()
+                      .insert(0, "my_font".to_owned());
+
+        fonts.families.get_mut(&egui::epaint::FontFamily::Monospace)
+                      .unwrap()
+                      .push("my_font".to_owned());
+
+        ctx.set_fonts(fonts);
     }
 }

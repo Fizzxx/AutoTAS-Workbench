@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
-use egui_winit::egui;
-//use egui_winit::egui::{RichText, Color32};
+use auto_tas::{ egui, wgpu };
 use egui_winit::winit:: {
     application::ApplicationHandler,
     dpi::PhysicalSize,
@@ -10,17 +9,28 @@ use egui_winit::winit:: {
     keyboard::{ KeyCode, PhysicalKey::Code },
     window::{ Window, WindowId },
 };
-use egui_wgpu::{ ScreenDescriptor, wgpu };
+use egui_wgpu::ScreenDescriptor;
 
 pub mod eguirenderer;
 use eguirenderer::EguiRenderer;
 
 pub mod renderstate;
-use monitors::toppanel::TopPanel;
 use renderstate::RenderState;
 
-pub mod monitors;
-use monitors::Monitors;
+pub mod screencap;
+use screencap::ScreenCap;
+
+pub mod toppanel;
+use toppanel::TopPanel;
+
+pub mod monitorpanel;
+use monitorpanel::MonitorPanel;
+
+pub mod bottompanel;
+use bottompanel::BottomPanel;
+
+pub mod centerpanel;
+use centerpanel::CenterPanel;
 
 
 pub struct App {
@@ -29,8 +39,14 @@ pub struct App {
     scale_factor: f32,
     egui_renderer: Option<EguiRenderer>,
     render_state: Option<RenderState>,
-    monitors: Monitors,
-    toppanel: TopPanel
+    screencap: ScreenCap,
+    toppanel: TopPanel,
+    //monitors: Monitors,
+    monitorpanel: MonitorPanel,
+    bottompanel: BottomPanel,
+    centerpanel: CenterPanel,
+    
+
 }
 
 impl Default for App {
@@ -41,8 +57,13 @@ impl Default for App {
             scale_factor: 1.0,
             render_state: None,
             egui_renderer: None,
-            monitors: Monitors::default(),
+            screencap: ScreenCap::default(),
             toppanel: TopPanel::default(),
+            //monitors: Monitors::default(),
+            monitorpanel: MonitorPanel::default(),
+            bottompanel: BottomPanel::default(),
+            centerpanel: CenterPanel::default(),
+            
         }
     }
 }
@@ -55,7 +76,7 @@ impl App {
             rs.surface_configs.format,
             None,
             1,
-            rs.window.as_ref()
+            rs.window.clone().as_ref()
         ))
     }
 
@@ -69,7 +90,6 @@ impl App {
 
     // -!- need to update error propogation
     fn redraw(&mut self) -> Result<(), wgpu::SurfaceError> {
-        //self.render_state.as_mut().unwrap().render()
         let rs = self.render_state.as_ref().unwrap();
 
         let surface_texture = rs.surface
@@ -99,7 +119,11 @@ impl App {
             screen_descriptor,
             |ctx| {
                 self.toppanel.show(ctx);
-                self.monitors.draw_monitors(ctx);
+                self.monitorpanel.show(ctx);
+                //self.screencap.show(ctx);
+                self.bottompanel.show(ctx);
+                self.centerpanel.show(ctx);
+                //self.monitors.draw_monitors(ctx);
             },
         );
         rs.queue.submit(Some(encoder.finish()));
@@ -156,8 +180,11 @@ impl ApplicationHandler for App {
             WindowEvent::KeyboardInput{event, ..} => {
                 if event.state.is_pressed() {
                     match event.physical_key {
-                        Code(KeyCode::KeyN) => {
-                            self.monitors.enable_monitor("Test Monitor".to_string());
+                        Code(KeyCode::KeyM) => {
+                            self.monitorpanel.is_expanded = !self.monitorpanel.is_expanded;
+                        }
+                        Code(KeyCode::KeyB) => {
+                            self.bottompanel.is_expanded = !self.bottompanel.is_expanded;
                         }
                         _ => {}
                     }

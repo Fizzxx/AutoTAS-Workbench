@@ -31,11 +31,11 @@ impl auto_tas::View for TopPanel {
 impl TopPanel {
     pub fn show(&mut self, ctx: &egui::Context) {
         let frame = egui::containers::Frame::default()
-                                .fill(egui::Color32::from_rgb(20, 20, 20));
-        
+                                .fill(egui::Color32::from_rgb(20, 20, 20));        
         use auto_tas::View;
         egui::TopBottomPanel::top("my_panel")
             .frame(frame)
+            .show_separator_line(false)
             .exact_height(25.0)
             .show_animated(
                 ctx, 
@@ -60,27 +60,3 @@ impl TopPanel {
         if ui.button("Save Session As...").clicked() {}
     }
 }
-
-// impl Monitor for TopPanel {
-//     fn name(&self) -> &'static str {
-//         "Top Panel"
-//     }
-
-//     fn show(&mut self, ctx: &egui::Context) {
-//         let frame = egui::containers::Frame::default();
-        
-//         egui::TopBottomPanel::top("my_panel")
-//             .frame(frame)
-//             .exact_height(25.0)
-//             .show(ctx, |ui| {
-//                 ui.horizontal(|ui| {
-//                     ui.label("Hello World!");
-//                     egui::ComboBox::from_label("File")
-//                         .show_ui(ui, |ui| {
-//                             // ui.selectable_value(current_value, selected_value, text)
-//                         });
-//                 })
-//             });
-//     }
-// }
-

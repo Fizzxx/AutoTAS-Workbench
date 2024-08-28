@@ -1,4 +1,5 @@
 pub use egui_winit::egui;
+pub use egui_wgpu::wgpu;
 
 
 pub trait View {
