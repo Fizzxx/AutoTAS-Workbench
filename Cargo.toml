@@ -7,6 +7,7 @@ edition = "2021"
 egui-wgpu = { git = "https://github.com/emilk/egui", package = "egui-wgpu", default-features = true }
 egui-winit = { git = "https://github.com/emilk/egui", package = "egui-winit" }
 env_logger = "0.11.5"
+minhook = "0.5.0"
 tokio = { version = "1.39.2", features = ["full"] }
 wgpu = "22.1.0"
-winapi = "0.3.9"
+winapi = { version = "0.3.9", features = ["everything"] }

@@ -17,9 +17,6 @@ use eguirenderer::EguiRenderer;
 pub mod renderstate;
 use renderstate::RenderState;
 
-pub mod screencap;
-use screencap::ScreenCap;
-
 pub mod toppanel;
 use toppanel::TopPanel;
 
@@ -39,7 +36,6 @@ pub struct App {
     scale_factor: f32,
     egui_renderer: Option<EguiRenderer>,
     render_state: Option<RenderState>,
-    screencap: ScreenCap,
     toppanel: TopPanel,
     //monitors: Monitors,
     monitorpanel: MonitorPanel,
@@ -57,7 +53,6 @@ impl Default for App {
             scale_factor: 1.0,
             render_state: None,
             egui_renderer: None,
-            screencap: ScreenCap::default(),
             toppanel: TopPanel::default(),
             //monitors: Monitors::default(),
             monitorpanel: MonitorPanel::default(),
